@@ -395,7 +395,7 @@
           <div class="fr">
             <div>
               <label>Your Name</label
-              ><input type="text" id="cfg-name" value="Paras V" />
+              ><input type="text" id="cfg-name" value="Paras" />
             </div>
             <div>
               <label>Resume PDF</label
@@ -749,7 +749,6 @@ Paras Verma
         document
           .querySelector('.bsm[id="btnReset"], .bai ~ .bsm')
           .addEventListener("click", resetBody);
-
       });
 
       function getChips() {
@@ -799,14 +798,16 @@ Paras Verma
         var setupNote = document.querySelector("#t-setup .wbox");
         if (setupNote) {
           setupNote.innerHTML =
-            '<strong>Use a Gmail App Password</strong><br />' +
+            "<strong>Use a Gmail App Password</strong><br />" +
             '1. Open <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a><br />' +
             '2. Choose "Mail" and generate a 16-character app password<br />' +
             "3. Paste it below to send email from your Gmail account<br />" +
             "4. The password is not stored on the server";
         }
 
-        var setupInfo = document.querySelector('#t-setup .ibox[style*="margin-top: 14px"]');
+        var setupInfo = document.querySelector(
+          '#t-setup .ibox[style*="margin-top: 14px"]',
+        );
         if (setupInfo) {
           setupInfo.innerHTML =
             "Direct sending through Gmail SMTP<br />" +
