@@ -10,6 +10,7 @@ var curFilt = "all";
   loadFromStorage();
   updStats();
   initTabs();
+  loadServerState();
 })();
 
 // ── LOCAL STORAGE ─────────────────────────────────────────────
@@ -27,6 +28,69 @@ function loadFromStorage() {
 function saveToStorage() {
   try {
     localStorage.setItem("jeb_companies", JSON.stringify(companies));
+  } catch (e) {}
+  saveCompaniesToServer();
+}
+
+async function loadServerState() {
+  try {
+    var resp = await fetch("php/state.php");
+    if (!resp.ok) return;
+    var data = await resp.json();
+    if (!data.success) return;
+
+    if (Array.isArray(data.companies) && data.companies.length) {
+      companies = data.companies;
+      try {
+        localStorage.setItem("jeb_companies", JSON.stringify(companies));
+      } catch (e) {}
+    }
+
+    if (data.profile) {
+      if (data.profile.gmail) {
+        localStorage.setItem("jeb_gmail", data.profile.gmail);
+        var gmailInput = document.getElementById("cfg-gmail");
+        if (gmailInput && !gmailInput.value) gmailInput.value = data.profile.gmail;
+      }
+      if (data.profile.name) {
+        localStorage.setItem("jeb_name", data.profile.name);
+        var nameInput = document.getElementById("cfg-name");
+        if (nameInput && !nameInput.value) nameInput.value = data.profile.name;
+      }
+    }
+
+    updStats();
+    if (document.getElementById("clist")) render();
+  } catch (e) {}
+}
+
+async function saveProfileToServer(gmail, name) {
+  try {
+    await fetch("php/save-profile.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gmail: gmail, name: name }),
+    });
+  } catch (e) {}
+}
+
+async function saveCompaniesToServer() {
+  try {
+    await fetch("php/save-companies.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companies: companies }),
+    });
+  } catch (e) {}
+}
+
+async function logSendToServer(entry) {
+  try {
+    await fetch("php/log-send.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry),
+    });
   } catch (e) {}
 }
 
@@ -291,6 +355,7 @@ function saveConfig() {
   localStorage.setItem("jeb_gmail", gmail);
   localStorage.removeItem("jeb_pass");
   localStorage.setItem("jeb_name", name);
+  saveProfileToServer(gmail, name);
   showMsg(m, "sbox", "✅ Config saved!");
   setTimeout(function () {
     m.style.display = "none";
@@ -410,12 +475,30 @@ async function startSend() {
       if (result.success) {
         lg("   ✅ Sent!", "ls");
         ok++;
+        logSendToServer({
+          senderEmail: gmail,
+          senderName: name,
+          subject: subject,
+          companyName: c.name,
+          companyEmail: c.email,
+          status: "sent",
+          message: result.message || "",
+        });
       } else {
         throw new Error(result.message || "Unknown error");
       }
     } catch (e) {
       lg("   ❌ Failed: " + (e.message || e), "le");
       fail++;
+      logSendToServer({
+        senderEmail: gmail,
+        senderName: name,
+        subject: subject,
+        companyName: c.name,
+        companyEmail: c.email,
+        status: "failed",
+        message: e.message || String(e),
+      });
     }
 
     document.getElementById("sc-sent").textContent = ok;

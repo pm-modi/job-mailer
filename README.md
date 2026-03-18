@@ -8,6 +8,7 @@ It lets a user:
 - write the email manually or rewrite it with AI
 - import company emails with JSON
 - send the same reviewed subject/body to all selected companies
+- persist sender profile, company list, and send logs on the backend
 
 ## Features
 
@@ -17,6 +18,7 @@ It lets a user:
 - Company list with manual add and JSON import
 - Bulk sending with delay control
 - Browser-based UI
+- Simple backend persistence with JSON file storage
 
 ## Project Structure
 
@@ -28,8 +30,13 @@ job-mail/
 |- js/companies.js
 |- php/sendmail.php
 |- php/ai-proxy.php
+|- php/state.php
+|- php/save-profile.php
+|- php/save-companies.php
+|- php/log-send.php
 |- composer.json
 |- vendor/
+|- data/runtime/storage.json
 ```
 
 ## Requirements
@@ -38,6 +45,7 @@ job-mail/
 - Composer
 - Gmail account with App Password enabled
 - Web server or local PHP server
+- Write access to `data/runtime/`
 
 ## Local Setup
 
@@ -75,6 +83,15 @@ http://localhost:8080
 6. Click `SEND ALL EMAILS NOW`.
 
 The app sends the current subject and current email body visible in the editor. It does not auto-send an old hardcoded template anymore.
+
+## Backend Storage
+
+The backend stores:
+- sender email and sender name
+- current company list
+- send logs with recipient, subject, status, and timestamp
+
+The Gmail App Password is not stored in backend storage.
 
 ## JSON Import Format
 
@@ -120,3 +137,28 @@ If you want, the next step can be:
 2. initialize git
 3. prepare the first commit
 4. tell you the exact GitHub push commands
+
+## Deployment
+
+This project is easiest to deploy on a container-friendly host because it already includes a `Dockerfile`.
+
+Recommended option:
+- Railway
+
+Why Railway:
+- simple Docker deploy
+- free HTTPS on Railway domains
+- custom domain support with SSL
+- supports attached volumes for persistent file storage
+
+Important:
+- the backend storage file must live on persistent storage in production
+- on Railway, attach a volume and mount it for the `data/runtime/` directory
+- set `GROQ_API_KEY` as an environment variable in the host dashboard
+
+Deployment checklist:
+1. push the repo to GitHub
+2. create a Railway project from the GitHub repo
+3. add `GROQ_API_KEY` in Railway variables
+4. attach persistent storage for `data/runtime/`
+5. deploy and use the generated HTTPS domain
