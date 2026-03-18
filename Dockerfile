@@ -1,15 +1,20 @@
-FROM php:8.2-apache
-RUN a2enmod rewrite
+FROM php:8.2-cli
+
 RUN apt-get update && apt-get install -y libzip-dev zip unzip curl \
-    && docker-php-ext-install zip && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install zip \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin --filename=composer
+
+WORKDIR /var/www/html
+
 COPY . /var/www/html/
-RUN cd /var/www/html && composer install --no-dev 2>/dev/null || true
+
+RUN composer install --no-dev 2>/dev/null || true
 RUN mkdir -p /var/www/html/data/runtime
-RUN printf '<Directory /var/www/html>\nAllowOverride All\nRequire all granted\n</Directory>\n' \
-    > /etc/apache2/conf-available/job-mailer.conf \
-    && a2enconf job-mailer
 RUN chown -R www-data:www-data /var/www/html
-EXPOSE 80
-CMD ["apache2-foreground"]
+
+EXPOSE 8080
+
+CMD sh -c "php -S 0.0.0.0:${PORT:-8080} -t /var/www/html"
