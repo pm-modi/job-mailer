@@ -1,0 +1,10 @@
+{
+  "name": "paras/job-email-blaster",
+  "description": "Job Application Email Sender — Paras Verma",
+  "require": {
+    "phpmailer/phpmailer": "^7.0"
+  },
+  "config": {
+    "optimize-autoloader": true
+  }
+}
