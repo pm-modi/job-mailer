@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobMailer</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/svg+xml" href="mail-favicon.svg" />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      /* AI ADDITIONS */
+      .ai-section {
+        background: rgba(168, 85, 247, 0.05);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .ai-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .ai-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #c084fc;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-family: "Space Mono", monospace;
+      }
+      .ai-badge {
+        padding: 2px 8px;
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: 1px;
+      }
+      .ai-desc {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 14px;
+        line-height: 1.6;
+        font-family: "Space Mono", monospace;
+      }
+      .key-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .key-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--danger);
+        flex-shrink: 0;
+        transition: background 0.3s;
+      }
+      .key-dot.ok {
+        background: var(--accent);
+      }
+      .key-inp {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        border-radius: 7px;
+        padding: 8px 11px;
+        color: var(--text);
+        font-family: "Space Mono", monospace;
+        font-size: 11px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .key-inp:focus {
+        border-color: #a855f7;
+      }
+      .key-link {
+        font-size: 11px;
+        color: #a855f7;
+        white-space: nowrap;
+        text-decoration: none;
+      }
+      .key-link:hover {
+        text-decoration: underline;
+      }
+      .chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .chip {
+        padding: 4px 11px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.15s;
+        font-family: "Syne", sans-serif;
+      }
+      .chip:hover {
+        border-color: #a855f7;
+        color: #c084fc;
+      }
+      .chip.on {
+        background: rgba(168, 85, 247, 0.15);
+        border-color: #a855f7;
+        color: #c084fc;
+        font-weight: 600;
+      }
+      .chat-box {
+        background: var(--overlay);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px;
+        min-height: 120px;
+        max-height: 200px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .chat-box::-webkit-scrollbar {
+        width: 3px;
+      }
+      .chat-box::-webkit-scrollbar-thumb {
+        background: var(--border);
+      }
+      .msg {
+        padding: 9px 12px;
+        border-radius: 9px;
+        font-size: 12px;
+        line-height: 1.6;
+        max-width: 92%;
+        font-family: "Space Mono", monospace;
+      }
+      .msg.bot {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        align-self: flex-start;
+        border-bottom-left-radius: 3px;
+      }
+      .msg.user {
+        background: rgba(168, 85, 247, 0.15);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+        color: var(--text);
+        align-self: flex-end;
+        border-bottom-right-radius: 3px;
+      }
+      .msg.ok {
+        background: rgba(0, 255, 136, 0.07);
+        border: 1px solid rgba(0, 255, 136, 0.2);
+        color: var(--accent);
+        align-self: flex-start;
+      }
+      .typing {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        padding: 9px 12px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 9px;
+        border-bottom-left-radius: 3px;
+        align-self: flex-start;
+      }
+      .typing span {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #a855f7;
+        animation: tdot 0.8s infinite;
+      }
+      .typing span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .typing span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes tdot {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+        }
+        30% {
+          transform: translateY(-5px);
+        }
+      }
+      .chat-inp-row {
+        display: flex;
+        gap: 7px;
+      }
+      .chat-inp {
+        flex: 1;
+        background: var(--overlay);
+        border: 1px solid rgba(168, 85, 247, 0.25);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .chat-inp:focus {
+        border-color: #a855f7;
+      }
+      .chat-inp::placeholder {
+        color: var(--muted);
+      }
+      .chat-send {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+        border: none;
+        color: #fff;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.15s;
+        flex-shrink: 0;
+      }
+      .chat-send:hover {
+        filter: brightness(1.15);
+      }
+      .email-body-ta {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        color: var(--text);
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        line-height: 1.7;
+        outline: none;
+        resize: vertical;
+        min-height: 200px;
+        transition: border-color 0.2s;
+      }
+      .email-body-ta:focus {
+        border-color: var(--accent);
+      }
+      .email-subj-inp {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--text);
+        font-family: "Space Mono", monospace;
+        font-size: 12px;
+        outline: none;
+        margin-bottom: 10px;
+        transition: border-color 0.2s;
+      }
+      .email-subj-inp:focus {
+        border-color: var(--accent);
+      }
+      .bai {
+        padding: 9px 16px;
+        background: rgba(168, 85, 247, 0.12);
+        border: 1px solid rgba(168, 85, 247, 0.3);
+        border-radius: 8px;
+        color: #c084fc;
+        font-family: "Syne", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .bai:hover {
+        background: rgba(168, 85, 247, 0.25);
+        transform: translateY(-1px);
+      }
+      .send-mode-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+      }
+      .send-mode-row label {
+        font-size: 12px;
+        color: var(--text);
+        text-transform: none;
+        letter-spacing: 0;
+        margin: 0;
+      }
+      .type-sel {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+        font-size: 12px;
+        cursor: pointer;
+        outline: none;
+      }
+      .type-sel:focus {
+        border-color: var(--accent);
+      }
+      .sn.orange {
+        color: var(--accent2);
+      }
+      .sn.blue {
+        color: var(--blue);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <button class="theme-toggle" id="themeToggle" type="button">
+          Light Mode
+        </button>
+      </div>
+      <header>
+        <div class="badge">✦ JOBMAILER AI PRO — SMTP + AI EMAIL WRITER</div>
+        <h1>AI Job Email Sender</h1>
+        <p>
+          Paras Verma · Real SMTP · AI Rewriter · Resume Attach · JSON Import
+        </p>
+      </header>
+
+      <div class="stats">
+        <div class="sc">
+          <div class="sn" id="sc-total">0</div>
+          <div class="sl">Total</div>
+        </div>
+        <div class="sc">
+          <div class="sn blue" id="sc-sel">0</div>
+          <div class="sl">Selected</div>
+        </div>
+        <div class="sc">
+          <div class="sn orange" id="sc-custom">0</div>
+          <div class="sl">Custom</div>
+        </div>
+        <div class="sc">
+          <div class="sn" id="sc-sent">0</div>
+          <div class="sl">Sent ✅</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-tab="setup">⚙️ Setup</div>
+        <div class="tab" data-tab="ai">🤖 AI Writer</div>
+        <div class="tab" data-tab="companies">🏢 Companies</div>
+        <div class="tab" data-tab="import">➕ Add / JSON</div>
+        <div class="tab" data-tab="send">🚀 Send</div>
+      </div>
+
+      <!-- SETUP -->
+      <div class="tc active" id="t-setup">
+        <div class="card">
+          <div class="ct">⚙️ Gmail SMTP Setup</div>
+          <div class="wbox">
+            ⚠️ <strong>Gmail App Password chahiye</strong><br />
+            1.
+            <a href="https://myaccount.google.com/apppasswords" target="_blank"
+              >myaccount.google.com/apppasswords</a
+            >
+            kholo<br />
+            2. "Mail" → Generate → 16-digit password copy karo<br />
+            3. Neeche paste karo — real Gmail se email jaayegi ✅
+          </div>
+          <div class="fr">
+            <div>
+              <label>Gmail Address</label
+              ><input
+                type="email"
+                id="cfg-gmail"
+                placeholder="test@gmail.com"
+              />
+            </div>
+            <div>
+              <label>App Password (16 digit)</label
+              ><input
+                type="password"
+                id="cfg-pass"
+                placeholder="abcd efgh ijkl mnop"
+              />
+            </div>
+          </div>
+          <div class="fr">
+            <div>
+              <label>Your Name</label
+              ><input type="text" id="cfg-name" value="Paras V" />
+            </div>
+            <div>
+              <label>Resume PDF</label
+              ><input type="file" id="cfg-resume" accept=".pdf" />
+            </div>
+          </div>
+          <div class="fr one">
+            <div>
+              <label>Delay Between Emails (seconds)</label
+              ><input type="number" id="cfg-delay" value="3" min="1" max="30" />
+            </div>
+          </div>
+          <button class="bsave" onclick="saveConfig()">💾 Save Config</button>
+          <div
+            id="cfg-msg"
+            class="sbox"
+            style="margin-top: 10px; display: none"
+          ></div>
+          <div class="ibox" style="margin-top: 14px">
+            ✅ PHP + PHPMailer Gmail SMTP — real inbox delivery<br />
+            ✅ Resume PDF attached automatically<br />
+            ✅ AI Writer tab mein email customize karo pehle
+          </div>
+        </div>
+      </div>
+
+      <!-- AI WRITER -->
+      <div class="tc" id="t-ai">
+        <div class="ai-section">
+          <div class="ai-header">
+            <span class="ai-title">AI Email Writer</span>
+            <span class="ai-badge">SERVER AI</span>
+          </div>
+          <div class="ai-desc">
+            API key daalo → bolo kya chahiye → AI email rewrite karega → Send
+            tab mein use hogi
+          </div>
+          <div
+            style="
+              font-size: 12px;
+              color: rgba(0, 255, 136, 0.9);
+              font-family: &quot;Space Mono&quot;, monospace;
+              margin-bottom: 14px;
+              padding: 10px 14px;
+              background: rgba(0, 255, 136, 0.07);
+              border-radius: 8px;
+              border: 1px solid rgba(0, 255, 136, 0.2);
+            "
+          >
+            ✅ AI ready — koi key nahi daalni!<br />
+            ✅ Server pe safely chhupa hai<br />
+            ✅ FREE Gemini — 1500 requests/day
+          </div>
+          <label
+            style="
+              font-size: 11px;
+              color: var(--muted);
+              letter-spacing: 1px;
+              text-transform: uppercase;
+              display: block;
+              margin-bottom: 6px;
+            "
+            >Context Tags</label
+          >
+          <div class="chips">
+            <span class="chip on" data-ctx="software developer job application"
+              >💻 Developer</span
+            >
+            <span class="chip" data-ctx="1 year fresher experience"
+              >🎓 Fresher</span
+            >
+            <span class="chip" data-ctx="urgent tone needed">⚡ Urgent</span>
+            <span class="chip" data-ctx="very formal professional tone"
+              >👔 Formal</span
+            >
+            <span class="chip" data-ctx="short under 80 words">📝 Short</span>
+            <span class="chip" data-ctx="follow up on previous application"
+              >🔄 Follow-up</span
+            >
+            <span class="chip" data-ctx="startup fast paced company"
+              >🚀 Startup</span
+            >
+            <span class="chip" data-ctx="product engineering company"
+              >🏗 Product Co</span
+            >
+          </div>
+          <div class="chat-box" id="chatBox">
+            <div class="msg bot">
+              👋 Bol kya chahiye — main email rewrite kar dunga.<br /><br />
+              Examples:<br />
+              "startup ke liye rewrite karo"<br />
+              "3 lines mein short karo"<br />
+              "subject line change karo"<br />
+              "urgent tone add karo"
+            </div>
+          </div>
+          <div class="chat-inp-row">
+            <input
+              class="chat-inp"
+              id="chatInp"
+              placeholder="e.g. make it shorter, startup tone…"
+              onkeydown="
+                if (event.key === 'Enter') {
+                  sendChat();
+                }
+              "
+            />
+            <button class="chat-send" onclick="sendChat()">↑</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="ct">✏️ Email Preview + Edit</div>
+          <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px">
+            AI se update hogi — ya direct yahan edit karo. Send tab mein yahi
+            jaayegi.
+          </p>
+          <label
+            style="
+              font-size: 11px;
+              color: var(--muted);
+              letter-spacing: 1px;
+              text-transform: uppercase;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >Subject</label
+          >
+          <input
+            class="email-subj-inp"
+            id="emailSubject"
+            value="Software Developer Application | ASP.NET MVC, C#, SQL Server | Immediate Joiner"
+          />
+          <label
+            style="
+              font-size: 11px;
+              color: var(--muted);
+              letter-spacing: 1px;
+              text-transform: uppercase;
+              display: block;
+              margin-bottom: 5px;
+            "
+            >Email Body</label
+          >
+          <textarea class="email-body-ta" id="emailBody">
+Dear Hiring Team,
+
+I am Paras Verma, a Full Stack Software Developer with 1 year of experience building live enterprise ERP systems.
+
+Key highlights:
+  — 8+ ERP modules end-to-end (ASP.NET MVC, C#, SQL Server, DevExtreme)
+  — SignalR real-time notifications — 50+ concurrent users
+  — 15+ stored procedures; report load time improved ~30%
+  — 5 production websites deployed, 99%+ uptime
+  — AI tools daily (Claude, Copilot) — 35% faster delivery
+  — B.Tech CSE 2025 | ~78% | Immediately available
+
+Resume attached. Would welcome an interview opportunity.
+
+Regards,
+Paras Verma
+📞 8295848561 | vparas0002@gmail.com</textarea
+          >
+          <div
+            style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px"
+          >
+            <button class="bai" onclick="quickEnhance('startup')">
+              ✨ Startup Version
+            </button>
+            <button class="bai" onclick="quickEnhance('product')">
+              ✨ Product Co Version
+            </button>
+            <button class="bai" onclick="quickEnhance('short')">
+              ✨ Short Version
+            </button>
+            <button class="bai" onclick="quickEnhance('formal')">
+              ✨ Formal Version
+            </button>
+            <button class="bsm" onclick="resetBody()">↩ Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPANIES -->
+      <div class="tc" id="t-companies">
+        <div class="card">
+          <div class="ct">🏢 Companies List</div>
+          <div class="ccontrols">
+            <button class="bsm" onclick="selAll()">✅ All</button>
+            <button class="bsm" onclick="deselAll()">⬜ None</button>
+            <button class="bsm" onclick="filt('all')">All</button>
+            <button class="bsm" onclick="filt('product')">🟢 Product</button>
+            <button class="bsm" onclick="filt('startup')">🟠 Startup</button>
+            <button class="bsm" onclick="filt('services')">🔵 Services</button>
+            <button class="bsm" onclick="filt('custom')">🟡 Custom</button>
+            <button class="bsm red" onclick="delSel()">🗑️ Delete</button>
+            <div class="sw">
+              <input
+                type="text"
+                id="srch"
+                placeholder="🔍 Search..."
+                oninput="render()"
+              />
+            </div>
+          </div>
+          <div class="cgrid" id="clist"></div>
+          <div class="lftr" id="lftr"></div>
+        </div>
+      </div>
+
+      <!-- IMPORT -->
+      <div class="tc" id="t-import">
+        <div class="card">
+          <div class="ct">➕ Ek Company Add Karo</div>
+          <div class="fr three">
+            <div>
+              <label>Company Name</label
+              ><input type="text" id="s-name" placeholder="CRED" />
+            </div>
+            <div>
+              <label>Email</label
+              ><input
+                type="email"
+                id="s-email"
+                placeholder="careers@cred.club"
+              />
+            </div>
+            <div>
+              <label>Type</label>
+              <select id="s-type">
+                <option value="custom">Custom</option>
+                <option value="startup">Startup</option>
+                <option value="product">Product</option>
+                <option value="services">Services</option>
+              </select>
+            </div>
+          </div>
+          <button class="badd" onclick="addOne()">+ Add</button>
+          <div
+            id="s-msg"
+            class="sbox"
+            style="margin-top: 10px; display: none"
+          ></div>
+        </div>
+        <div class="card">
+          <div class="ct">📋 Bulk JSON Import</div>
+          <div class="ibox">
+            ✅ Hazaron companies ek baar mein<br />✅ Duplicate emails
+            auto-skip<br />✅ "type" optional
+          </div>
+          <div class="jtpl">
+            [ { "name": "CRED", "email": "careers@cred.club", "type": "startup"
+            }, { "name": "Zepto", "email": "careers@zepto.co", "type": "startup"
+            } ]
+          </div>
+          <div class="fr one">
+            <div>
+              <label>JSON Paste Karo</label>
+              <textarea
+                class="jarea"
+                id="jinput"
+                placeholder='[ { "name": "Company", "email": "hr@co.com" } ]'
+              ></textarea>
+            </div>
+          </div>
+          <div id="jerr" class="ebox" style="display: none"></div>
+          <div id="jsuc" class="sbox" style="display: none"></div>
+          <button class="bimp" onclick="doImport()">📥 Import JSON</button>
+        </div>
+        <div class="card">
+          <div class="ct">📤 Export JSON</div>
+          <button class="bsm" style="padding: 10px 18px" onclick="doExport()">
+            ⬇️ Download companies.json
+          </button>
+        </div>
+      </div>
+
+      <!-- SEND -->
+      <div class="tc" id="t-send">
+        <div class="card">
+          <div class="ct">🚀 Send Real Emails via SMTP</div>
+          <div class="send-mode-row">
+            <label>Send mode:</label>
+            <select class="type-sel" id="sendMode">
+              <option value="smart">
+                🧠 Smart — auto-personalize by company type
+              </option>
+              <option value="custom">
+                ✏️ Custom — use AI Writer body for all
+              </option>
+            </select>
+          </div>
+          <div class="ibox">
+            🧠 Smart: product/startup/services ke liye alag body auto-generate
+            hogi<br />
+            ✏️ Custom: AI Writer mein jo likha hai wahi har company ko jaayega
+          </div>
+          <button class="bmain" id="sendbtn" onclick="startSend()">
+            🚀 &nbsp; SEND ALL EMAILS NOW
+          </button>
+          <div id="psec" style="display: none; margin-top: 18px">
+            <div class="prog-top">
+              <span id="plabel">Initializing...</span><span id="ppct">0%</span>
+            </div>
+            <div class="pbwrap"><div class="pbfill" id="pfill"></div></div>
+            <div id="logbox"></div>
+          </div>
+          <div class="rbox" id="rbox" style="display: none">
+            <h2 id="rtitle"></h2>
+            <p id="rdesc"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="js/companies.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+      var chatHistory = [];
+
+      window.addEventListener("DOMContentLoaded", function () {
+        initTheme();
+        refreshUiCopy();
+        document.querySelectorAll(".chip").forEach(function (chip) {
+          chip.addEventListener("click", function () {
+            chip.classList.toggle("on");
+          });
+        });
+
+        document
+          .getElementById("chatInp")
+          .addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              sendChat();
+            }
+          });
+
+        document
+          .querySelector(".chat-send")
+          .addEventListener("click", function () {
+            sendChat();
+          });
+
+        var btns = { 0: "startup", 1: "product", 2: "short", 3: "formal" };
+        document.querySelectorAll(".bai").forEach(function (btn, i) {
+          btn.addEventListener("click", function () {
+            quickEnhance(btns[i]);
+          });
+        });
+
+        document
+          .querySelector('.bsm[id="btnReset"], .bai ~ .bsm')
+          .addEventListener("click", resetBody);
+
+      });
+
+      function getChips() {
+        return Array.from(document.querySelectorAll(".chip.on"))
+          .map(function (c) {
+            return c.dataset.ctx;
+          })
+          .join(", ");
+      }
+
+      function initTheme() {
+        var savedTheme = localStorage.getItem("jm_theme") || "dark";
+        applyTheme(savedTheme);
+        var themeToggle = document.getElementById("themeToggle");
+        if (themeToggle) {
+          themeToggle.addEventListener("click", function () {
+            var nextTheme =
+              document.body.dataset.theme === "light" ? "dark" : "light";
+            localStorage.setItem("jm_theme", nextTheme);
+            applyTheme(nextTheme);
+          });
+        }
+      }
+
+      function applyTheme(theme) {
+        document.body.dataset.theme = theme;
+        var themeToggle = document.getElementById("themeToggle");
+        if (themeToggle) {
+          themeToggle.textContent =
+            theme === "light" ? "Dark Mode" : "Light Mode";
+        }
+      }
+
+      function refreshUiCopy() {
+        var badge = document.querySelector("header .badge");
+        if (badge) badge.textContent = "JOBMAILER";
+
+        var headerText = document.querySelector("header p");
+        if (headerText) {
+          headerText.textContent =
+            "Write once, review once, and send the same email to selected companies.";
+        }
+
+        var setupTitle = document.querySelector("#t-setup .ct");
+        if (setupTitle) setupTitle.textContent = "Gmail SMTP Setup";
+
+        var setupNote = document.querySelector("#t-setup .wbox");
+        if (setupNote) {
+          setupNote.innerHTML =
+            '<strong>Use a Gmail App Password</strong><br />' +
+            '1. Open <a href="https://myaccount.google.com/apppasswords" target="_blank">myaccount.google.com/apppasswords</a><br />' +
+            '2. Choose "Mail" and generate a 16-character app password<br />' +
+            "3. Paste it below to send email from your Gmail account<br />" +
+            "4. The password is not stored on the server";
+        }
+
+        var setupInfo = document.querySelector('#t-setup .ibox[style*="margin-top: 14px"]');
+        if (setupInfo) {
+          setupInfo.innerHTML =
+            "Direct sending through Gmail SMTP<br />" +
+            "Optional PDF resume attachment<br />" +
+            "The App Password is not stored on the server and must be re-entered after refresh<br />" +
+            "Review the final email in the editor before sending";
+        }
+
+        var passInput = document.getElementById("cfg-pass");
+        if (passInput && !document.getElementById("passPrivacyNote")) {
+          var passPrivacyNote = document.createElement("div");
+          passPrivacyNote.id = "passPrivacyNote";
+          passPrivacyNote.className = "lftr";
+          passPrivacyNote.style.marginTop = "8px";
+          passPrivacyNote.textContent =
+            "This App Password is used only for sending and is not stored on the server.";
+          passInput.parentNode.appendChild(passPrivacyNote);
+        }
+
+        var aiDesc = document.querySelector(".ai-desc");
+        if (aiDesc) {
+          aiDesc.textContent =
+            "Describe the change you want, and the assistant will rewrite the email in the editor.";
+        }
+
+        var aiInfo = document.querySelector(".ai-desc + div");
+        if (aiInfo) {
+          aiInfo.innerHTML =
+            "AI rewriting runs on the server<br />" +
+            "Manual editing is always available<br />" +
+            "If AI is unavailable, standard email sending still works";
+        }
+
+        var introMsg = document.querySelector("#chatBox .msg.bot");
+        if (introMsg) {
+          introMsg.innerHTML =
+            "Describe how you want the email adjusted.<br /><br />" +
+            "Examples:<br />" +
+            '"Rewrite it for a startup role"<br />' +
+            '"Make it shorter and sharper"<br />' +
+            '"Change the subject line"<br />' +
+            '"Rewrite it in a formal tone"';
+        }
+
+        var previewTitle = document.querySelector("#t-ai .card .ct");
+        if (previewTitle) previewTitle.textContent = "Email Preview + Edit";
+
+        var previewText = document.querySelector("#t-ai .card p");
+        if (previewText) {
+          previewText.textContent =
+            "Keep the final subject and body here. This exact content is sent to all selected companies.";
+        }
+
+        var companiesTitle = document.querySelector("#t-companies .ct");
+        if (companiesTitle) companiesTitle.textContent = "Companies List";
+
+        var addTitle = document.querySelector("#t-import .card .ct");
+        if (addTitle) addTitle.textContent = "Add One Company";
+
+        var importTitle = document.querySelectorAll("#t-import .card .ct")[1];
+        if (importTitle) importTitle.textContent = "Bulk JSON Import";
+
+        var importInfo = document.querySelectorAll("#t-import .card .ibox")[0];
+        if (importInfo) {
+          importInfo.innerHTML =
+            "Import multiple companies in one step<br />" +
+            "Duplicate emails are skipped automatically<br />" +
+            '"type" is optional';
+        }
+
+        var exportTitle = document.querySelectorAll("#t-import .card .ct")[2];
+        if (exportTitle) exportTitle.textContent = "Export JSON";
+
+        var sendTitle = document.querySelector("#t-send .ct");
+        if (sendTitle) sendTitle.textContent = "Send Emails via Gmail SMTP";
+
+        var sendModeRow = document.querySelector(".send-mode-row");
+        if (sendModeRow) sendModeRow.style.display = "none";
+
+        var sendInfo = document.querySelector("#t-send .ibox");
+        if (sendInfo) {
+          sendInfo.innerHTML =
+            "Every selected company receives the exact subject and body shown in the editor<br />" +
+            "Review the message once before sending";
+        }
+
+        var aiBadge = document.querySelector(".ai-badge");
+        if (aiBadge) aiBadge.textContent = "AI ASSIST";
+      }
+
+      function addChatMsg(text, cls) {
+        var box = document.getElementById("chatBox");
+        var d = document.createElement("div");
+        d.className = "msg " + cls;
+        d.innerHTML = text.replace(/\n/g, "<br>");
+        box.appendChild(d);
+        box.scrollTop = box.scrollHeight;
+      }
+
+      function showTyping() {
+        var box = document.getElementById("chatBox");
+        var d = document.createElement("div");
+        d.className = "typing";
+        d.id = "typingEl";
+        d.innerHTML = "<span></span><span></span><span></span>";
+        box.appendChild(d);
+        box.scrollTop = box.scrollHeight;
+      }
+
+      function hideTyping() {
+        var d = document.getElementById("typingEl");
+        if (d) d.remove();
+      }
+
+      function sendChat() {
+        var inp = document.getElementById("chatInp");
+        var msg = inp.value.trim();
+        if (!msg) return;
+        inp.value = "";
+        addChatMsg(msg, "user");
+        callAI(msg);
+      }
+
+      function quickEnhance(type) {
+        var p = {
+          startup:
+            "Rewrite for a startup. Energetic tone, mention AI tools and fast delivery.",
+          product:
+            "Rewrite for a product company. Focus on ERP, SQL performance, SignalR.",
+          short:
+            "Rewrite very short — max 80 words. Name, 2 highlights, contact only.",
+          formal: "Rewrite in very formal professional tone.",
+        };
+        addChatMsg("✨ " + p[type], "user");
+        callAI(p[type]);
+      }
+
+      function resetBody() {
+        document.getElementById("emailBody").value =
+          "Dear Hiring Team,\n\nI am Paras Verma, a Full Stack Software Developer with 1 year of experience building live enterprise ERP systems.\n\nKey highlights:\n  — 8+ ERP modules end-to-end (ASP.NET MVC, C#, SQL Server, DevExtreme)\n  — SignalR real-time notifications for 50+ concurrent users\n  — 15+ stored procedures; report load time improved ~30%\n  — 5 production websites deployed with 99%+ uptime\n  — AI tools daily (Claude, Copilot) — 35% faster delivery\n  — B.Tech CSE 2025 | ~78% | Immediately available\n\nResume attached. Would welcome an interview opportunity.\n\nRegards,\nParas Verma\n8295848561 | vparas0002@gmail.com";
+      }
+
+      async function callAI(userMsg) {
+        var emailBody = document.getElementById("emailBody").value;
+        var context = getChips() || "software developer";
+        showTyping();
+        try {
+          var res = await fetch("php/ai-proxy.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: userMsg,
+              context: context,
+              emailBody: emailBody,
+            }),
+          });
+          hideTyping();
+          if (!res.ok) {
+            addChatMsg("Server error: " + res.status, "bot");
+            return;
+          }
+          var data = await res.json();
+          if (data.error) {
+            addChatMsg("Error: " + data.error, "bot");
+            return;
+          }
+          var reply = data.reply || "";
+          var isEmail =
+            reply.includes("Dear") ||
+            reply.includes("Regards") ||
+            reply.includes("—");
+          if (isEmail) {
+            document.getElementById("emailBody").value = reply;
+            addChatMsg("✅ Email updated!", "ok");
+          } else {
+            addChatMsg(reply, "bot");
+          }
+        } catch (e) {
+          hideTyping();
+          addChatMsg("Network error: " + e.message, "bot");
+        }
+      }
+    </script>
+  </body>
+</html>
