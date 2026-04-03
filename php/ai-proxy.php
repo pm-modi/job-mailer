@@ -9,83 +9,141 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$apiKey = getenv('GROQ_API_KEY');
+$apiKey = getenv('GROQ_API_KEY') ?: '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';
 if (!$apiKey) {
-    echo json_encode(['error' => 'GROQ_API_KEY not configured on server']);
+    echo json_encode(['error' => 'GROQ_API_KEY is not configured on the server']);
     exit;
 }
 
 $input = json_decode(file_get_contents('php://input'), true);
-if (!$input || empty($input['prompt'])) {
+if (!is_array($input) || empty($input['prompt'])) {
     echo json_encode(['error' => 'prompt required']);
     exit;
 }
 
-$prompt = $input['prompt'];
-$context = $input['context'] ?? 'software developer';
-$emailBody = $input['emailBody'] ?? '';
+$profile = is_array($input['profile'] ?? null) ? $input['profile'] : [];
+$name = trim($profile['name'] ?? 'Suraj Gupta');
+$title = trim($profile['title'] ?? 'Software Developer');
+$email = trim($profile['email'] ?? '');
+$phone = trim($profile['phone'] ?? '');
+$summary = trim($profile['summary'] ?? 'Software developer with experience across backend and frontend delivery.');
+$availability = trim($profile['availability'] ?? 'Available for interviews');
+$context = trim($input['context'] ?? 'software developer role');
+$emailBody = trim($input['emailBody'] ?? '');
+$subject = trim($input['subject'] ?? '');
+$prompt = trim($input['prompt']);
 
-$systemMsg = "You are an expert job email writer for Paras Verma.
-Paras: Full Stack .NET Developer, 1 year exp, 8+ live ERP modules (ASP.NET MVC, C#, SQL Server, SignalR).
-5 production websites. B.Tech CSE 2025 ~78%. Target: 30000-35000/month Gurugram/NCR India.
-Phone: 8295848561 | Email: vparas0002@gmail.com
-Context: {$context}
+$contact = implode(' | ', array_values(array_filter([$phone, $email])));
 
-Current email:
----
-{$emailBody}
----
+$systemMsg = "You are an expert job application email writer.\n"
+    . "Candidate name: {$name}\n"
+    . "Target title: {$title}\n"
+    . "Profile summary: {$summary}\n"
+    . "Availability: {$availability}\n"
+    . "Contact: {$contact}\n"
+    . "Context tags: {$context}\n"
+    . "Current subject: {$subject}\n\n"
+    . "Current email body:\n---\n{$emailBody}\n---\n\n"
+    . "Rules:\n"
+    . "- Return JSON only with keys subject and body\n"
+    . "- Keep the response concise and realistic\n"
+    . "- Preserve factual details unless the user asks to change them\n"
+    . "- Do not add markdown or commentary outside JSON";
 
-Rules:
-- Rewrite/modify request pe: ONLY new email body return karo
-- No markdown, no explanation - plain text only
-- Keep Paras details accurate";
-
-$url = 'https://api.groq.com/openai/v1/chat/completions';
-$body = json_encode([
+$payload = json_encode([
     'model' => 'llama-3.3-70b-versatile',
     'messages' => [
         ['role' => 'system', 'content' => $systemMsg],
         ['role' => 'user', 'content' => $prompt],
     ],
-    'max_tokens' => 800,
-    'temperature' => 0.7,
+    'max_tokens' => 700,
+    'temperature' => 0.6,
 ]);
 
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => $body,
-    CURLOPT_HTTPHEADER => [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey,
-    ],
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_SSL_VERIFYPEER => false,
-]);
+$response = false;
+$httpCode = 0;
+$requestError = '';
 
-$response = curl_exec($ch);
-$curlError = curl_error($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-curl_close($ch);
+if (function_exists('curl_init')) {
+    $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $payload,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => false,
+    ]);
 
-if (!$response || $curlError) {
-    echo json_encode(['error' => 'Curl failed: ' . $curlError, 'http_code' => $httpCode]);
+    $response = curl_exec($ch);
+    $requestError = curl_error($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+} else {
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => implode("\r\n", [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $apiKey,
+            ]),
+            'content' => $payload,
+            'timeout' => 30,
+            'ignore_errors' => true,
+        ],
+    ]);
+
+    $response = @file_get_contents('https://api.groq.com/openai/v1/chat/completions', false, $context);
+    if (isset($http_response_header) && is_array($http_response_header)) {
+        foreach ($http_response_header as $headerLine) {
+            if (preg_match('/^HTTP\/\S+\s+(\d+)/', $headerLine, $matches)) {
+                $httpCode = (int) $matches[1];
+                break;
+            }
+        }
+    }
+
+    if ($response === false) {
+        $error = error_get_last();
+        $requestError = $error['message'] ?? 'HTTP request failed';
+    }
+}
+
+if (!$response || $requestError) {
+    echo json_encode(['error' => 'Request failed: ' . $requestError, 'http_code' => $httpCode]);
     exit;
 }
 
 $data = json_decode($response, true);
-
 if (isset($data['error'])) {
     echo json_encode(['error' => 'Groq: ' . $data['error']['message']]);
     exit;
 }
 
-$text = $data['choices'][0]['message']['content'] ?? null;
-if (!$text) {
-    echo json_encode(['error' => 'No response', 'raw' => $data]);
+$text = trim($data['choices'][0]['message']['content'] ?? '');
+if ($text === '') {
+    echo json_encode(['error' => 'No response from model']);
     exit;
 }
 
-echo json_encode(['reply' => trim($text)]);
+if (preg_match('/```(?:json)?\s*(\{.*\})\s*```/is', $text, $matches)) {
+    $text = trim($matches[1]);
+}
+
+$decoded = json_decode($text, true);
+if (!is_array($decoded)) {
+    echo json_encode([
+        'subject' => $subject,
+        'body' => $text,
+        'reply' => $text,
+    ]);
+    exit;
+}
+
+echo json_encode([
+    'subject' => trim($decoded['subject'] ?? $subject),
+    'body' => trim($decoded['body'] ?? $emailBody),
+]);

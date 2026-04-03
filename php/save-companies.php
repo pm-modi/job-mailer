@@ -26,8 +26,14 @@ foreach ($companies as $company) {
     }
 
     $name = trim($company['name'] ?? '');
-    $email = trim($company['email'] ?? '');
+    $email = strtolower(trim($company['email'] ?? ''));
     $type = trim($company['type'] ?? 'custom');
+    $location = trim($company['location'] ?? 'Remote');
+    $focus = trim($company['focus'] ?? 'General hiring');
+    $role = trim($company['role'] ?? 'Software Engineer');
+    $sourceUrl = trim($company['sourceUrl'] ?? '');
+    $sourceLabel = trim($company['sourceLabel'] ?? 'Public recruiting mailbox');
+    $selected = array_key_exists('selected', $company) ? (bool) $company['selected'] : true;
 
     if ($name === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         continue;
@@ -37,6 +43,12 @@ foreach ($companies as $company) {
         'name' => $name,
         'email' => $email,
         'type' => $type !== '' ? $type : 'custom',
+        'location' => $location !== '' ? $location : 'Remote',
+        'focus' => $focus !== '' ? $focus : 'General hiring',
+        'role' => $role !== '' ? $role : 'Software Engineer',
+        'sourceUrl' => $sourceUrl,
+        'sourceLabel' => $sourceLabel !== '' ? $sourceLabel : 'Public recruiting mailbox',
+        'selected' => $selected,
     ];
 }
 
